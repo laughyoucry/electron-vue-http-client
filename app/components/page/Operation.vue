@@ -26,17 +26,23 @@
         <div slot="header" class="clearfix">
           <span style="line-height: 14px;">请求消息</span>
         </div>
-        <div class="text item">
-          <span>{{ req.reqBody }}</span>
-        </div>
+        <el-input
+          type="textarea"
+          :rows="10"
+          placeholder="请求内容"
+          v-model="req.reqBody">
+        </el-input>
       </el-card>
       <el-card class="box-card">
         <div slot="header" class="clearfix">
           <span style="line-height: 14px;">响应消息</span>
         </div>
-        <div class="text item">
-          <span>{{ res.resBody }}</span>
-        </div>
+        <el-input
+          type="textarea"
+          :rows="10"
+          placeholder="响应内容"
+          v-model="res.resBody">
+        </el-input>
       </el-card>
   </div>
 </template>
@@ -152,7 +158,7 @@
           console.log('error:', error)
           console.log('statusCode:', response && response.statusCode) // Print the response status code if a response was received
           if (response && response.statusCode === 200) {
-            _this.res.resBody = body
+            _this.res.resBody = JSON.stringify(JSON.parse(body), null, 2)
           }
           console.log('body:', body) // Print the HTML for the Google homepage.
         })
