@@ -1,9 +1,9 @@
 {
-  "name": "electron-boilerplate-vue",
-  "productName": "Electron Boilerplate Vue",
-  "version": "0.1.0",
-  "description": "An Electron + Vue.js project.",
-  "author": "Brad Stewart <me@bradstewart.co>",
+  "name": "electron-vue-http-client",
+  "productName": "Electron Vue Http Client",
+  "version": "1.0.0",
+  "description": "An Electron + Vue.js project. Base on electron-boilerplate-vue",
+  "author": "lemo <linpeng_flexi@163.com>",
   "main": "background.js",
   "dependencies": {
     "jquery": "2.2.2",
@@ -22,6 +22,7 @@
     "vue-loader": "^12.1.0",
     "vue-template-compiler": "^2.2.6",
     "webpack": "^2.6.1",
-    "webpack-dev-server": "^2.4.5"
+    "webpack-dev-server": "^2.4.5",
+    "moment":"^2.18.1"
   }
 }

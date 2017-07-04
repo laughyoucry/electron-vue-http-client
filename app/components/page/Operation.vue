@@ -1,22 +1,19 @@
 <template>
   <div class="operation">
       <el-form ref="form" :model="req" label-width="80px" :inline="true" class="demo-form-inline">
-          <el-form-item label="ip">
-              <el-input v-model="req.ip"></el-input>
+          <el-form-item label="uri">
+              <el-input v-model="req.uri"></el-input>
           </el-form-item>
           <el-form-item label="appid">
               <el-input v-model="req.appid"></el-input>
           </el-form-item>
-          <el-form-item label="uri">
-              <el-input v-model="req.uri"></el-input>
-          </el-form-item>
-          <el-form-item label="请求方法">
-              <el-select v-model="req.method">
-                  <el-option label="GET" value="GET"></el-option>
-                  <el-option label="POST" value="POST"></el-option>
-                  <el-option label="PUT" value="PUT"></el-option>
-                  <el-option label="DELETE" value="DELETE"></el-option>
-              </el-select>
+          <el-form-item label="method">
+            <el-select v-model="req.method">
+                <el-option label="GET" value="GET"></el-option>
+                <el-option label="POST" value="POST"></el-option>
+                <el-option label="PUT" value="PUT"></el-option>
+                <el-option label="DELETE" value="DELETE"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item>
               <el-button type="primary" @click="onSubmit">发送</el-button>
@@ -30,7 +27,7 @@
           type="textarea"
           :rows="10"
           placeholder="请求内容"
-          v-model="req.reqBody">
+          v-model="req.body">
         </el-input>
       </el-card>
       <el-card class="box-card">
@@ -41,7 +38,7 @@
           type="textarea"
           :rows="10"
           placeholder="响应内容"
-          v-model="res.resBody">
+          v-model="res.body">
         </el-input>
       </el-card>
   </div>
@@ -49,119 +46,112 @@
 
 <script>
   import request from 'request'
+  import crypto from 'crypto'
+  import fs from 'fs'
   // import qs from 'querystring'
+  import moment from 'moment'
 
   export default {
     data () {
       return {
         req: {
-          'ip': '127.0.0.1:8088',
-          'appid': '1234kfasdfkdslklfhfgh4567',
-          'uri': 'http://127.0.0.1:8180/api/user',
+          'uri': '',
+          'appid': '',
           'method': 'GET',
-          'reqBody': {
-            name: 'lemo',
-            age: 12,
-            pwd: '123456'
-          }
+          'body': ''
         },
         res: {
-          resBody: '这里是响应内容'
+          body: ''
         }
       }
     },
     components: {},
     methods: {
+      // 发送事件
       onSubmit: function () {
-        // // 请求头信息
-        // var headers = ''
-        // if (this.req.method === 'GET') {
-        //   headers = 'application/x-www-form-urlencoded'
-        // } else {
-        //   headers = 'application/json;charset=utf-8'
-        // }
-        // console.log('headers is ' + headers)
-        //
-        // // 请求体信息
-        // var reqBody = ''
-        // if (this.req.reqBody) {
-        //   reqBody = JSON.stringify(this.req.reqBody)
-        //   console.log('reqBody is ' + reqBody)
-        // }
-        // var _this = this
-        // var opt = {
-        //   method: _this.req.method,
-        //   uri: _this.req.uri,
-        //   headers: {
-        //     headers
-        //   },
-        //   body: reqBody
-        // }
-
-        var baseUrl = 'http://127.0.0.1:8180/api/'
-        var opt = {}
-        var reqMethod = this.req.method
-        var user = {
-          'name': '1',
-          'age': 22,
-          'pwd': '*********'
-        }
-
-        if (reqMethod === 'GET') {
-          opt = {
-            baseUrl: baseUrl,
-            uri: 'user',
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-              // 'Content-Length': data.length
-            }
-          }
-        } else if (reqMethod === 'POST') {
-          opt = {
-            baseUrl: baseUrl,
-            uri: 'user',
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json;charset=utf-8'
-              // 'Content-Length': data.length
-            },
-            body: JSON.stringify(user)
-          }
-        } else if (reqMethod === 'PUT') {
-          opt = {
-            baseUrl: baseUrl,
-            uri: 'user',
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json;charset=utf-8'
-              // 'Content-Length': data.length
-            },
-            body: JSON.stringify(user)
-          }
-        } else if (reqMethod === 'DELETE') {
-          opt = {
-            baseUrl: baseUrl,
-            uri: 'user',
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json;charset=utf-8'
-              // 'Content-Length': data.length
-            },
-            body: JSON.stringify(user)
-          }
-        }
-
+        var opt = this.getOpt()
         this.$message('发送请求中...')
+
         var _this = this
         request(opt, function (error, response, body) {
           console.log('error:', error)
           console.log('statusCode:', response && response.statusCode) // Print the response status code if a response was received
           if (response && response.statusCode === 200) {
-            _this.res.resBody = JSON.stringify(JSON.parse(body), null, 2)
+            var resMsg = JSON.stringify((JSON.parse(body)).message)
+            var decMsg = new Buffer(resMsg, 'base64').toString()
+            _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
           }
           console.log('body:', body) // Print the HTML for the Google homepage.
         })
+      },
+      // 获取 opt 对象
+      getOpt: function () {
+        // 请求头信息
+        var method = this.req.method
+        var uri = this.req.uri
+        var body = this.req.body
+        var appid = this.req.appid
+
+        // application/x-www-form-urlencoded
+        var contentType = 'application/json;charset=utf-8'
+        var opt = {
+          method: method,
+          uri: uri,
+          headers: {
+            'Content-Type': contentType
+          }
+        }
+
+        // GET 请求
+        if (method === 'GET') {
+          // opt.qs = qs.stringify(this.getBody(appid, body))
+          opt.qs = this.getBody(appid, body)
+        } else {
+          // 其他请求
+          opt.body = JSON.stringify(this.getBody(appid, body))
+        }
+        console.log('opt is :' + JSON.stringify(opt))
+        return opt
+      },
+      // 获取请求体
+      getBody: function (appid, body) {
+        var message = this.base64(this.getMessage(body))
+        var signature = this.sign(appid + message)
+        return {
+          message: message,
+          signature: signature
+        }
+      },
+      // 组装message,拼装上必须信息
+      getMessage: function (body) {
+        if (!body) {
+          body = {}
+        } else {
+          body = JSON.parse(body)
+        }
+        body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
+        body['nonce'] = '123456'
+        body['ex_serial_no'] = Date.parse(new Date())
+        return body
+      },
+      // base64转码
+      base64: function (obj) {
+        if (!obj) {
+          return
+        }
+        var tmp = JSON.stringify(obj)
+        var buf = new Buffer(tmp)
+        return buf.toString('base64')
+      },
+      // 签名
+      sign: function (body) {
+        if (typeof body === 'object') {
+          body = JSON.stringify(body)
+        }
+        var sign = crypto.createSign('SHA1')
+        var rsaPrivateKey = fs.readFileSync('privateKey.js').toString()
+        sign.update(body)
+        return sign.sign(rsaPrivateKey, 'base64')
       }
     }
   }
