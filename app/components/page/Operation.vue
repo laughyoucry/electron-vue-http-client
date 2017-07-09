@@ -1,24 +1,21 @@
 <template>
   <div class="operation">
-      <el-form ref="form" :model="req" label-width="80px" :inline="true" class="demo-form-inline">
-          <el-form-item label="uri">
-              <el-input v-model="req.uri"></el-input>
-          </el-form-item>
-          <el-form-item label="appid">
-              <el-input v-model="req.appid"></el-input>
-          </el-form-item>
-          <el-form-item label="method">
-            <el-select v-model="req.method">
-                <el-option label="GET" value="GET"></el-option>
-                <el-option label="POST" value="POST"></el-option>
-                <el-option label="PUT" value="PUT"></el-option>
-                <el-option label="DELETE" value="DELETE"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-              <el-button type="primary" @click="onSubmit">发送</el-button>
-          </el-form-item>
-      </el-form>
+      <div>
+        <el-input placeholder="请输入appid" v-model="req.appid">
+          <template slot="prepend">APPID:</template>
+        </el-input>
+      </div>
+      <div style="margin-top: 10px;">
+        <el-input placeholder="请输入地址" v-model="req.uri">
+          <el-select v-model="req.method" slot="prepend" placeholder="请选择">
+            <el-option label="GET" value="GET"></el-option>
+            <el-option label="POST" value="POST"></el-option>
+            <el-option label="PUT" value="PUT"></el-option>
+            <el-option label="DELETE" value="DELETE"></el-option>
+          </el-select>
+          <el-button slot="append" icon="search" @click="onSubmit">发送</el-button>
+        </el-input>
+      </div>
       <el-card class="box-card">
         <div slot="header" class="clearfix">
           <span style="line-height: 14px;">请求消息</span>
@@ -48,8 +45,13 @@
   import request from 'request'
   import crypto from 'crypto'
   import fs from 'fs'
-  // import qs from 'querystring'
   import moment from 'moment'
+  import log4js from 'log4js'
+
+  log4js.loadAppender('file')
+  log4js.addAppender(log4js.appenders.file('logs/cheese.log'), 'cheese')
+  var logger = log4js.getLogger('cheese')
+  logger.setLevel('DEBUG')
 
   export default {
     data () {
@@ -69,23 +71,25 @@
     methods: {
       // 发送事件
       onSubmit: function () {
+        logger.info('发送请求中...')
         var opt = this.getOpt()
-        this.$message('发送请求中...')
 
         var _this = this
         request(opt, function (error, response, body) {
-          console.log('error:', error)
-          console.log('statusCode:', response && response.statusCode) // Print the response status code if a response was received
+          logger.info('成功返回信息')
+          logger.info('error:', error)
+          logger.info('statusCode:', response && response.statusCode) // Print the response status code if a response was received
           if (response && response.statusCode === 200) {
             var resMsg = JSON.stringify((JSON.parse(body)).message)
             var decMsg = new Buffer(resMsg, 'base64').toString()
             _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
           }
-          console.log('body:', body) // Print the HTML for the Google homepage.
+          logger.info('body:', body) // Print the HTML for the Google homepage.
         })
       },
       // 获取 opt 对象
       getOpt: function () {
+        logger.info('获取 opt 对象')
         // 请求头信息
         var method = this.req.method
         var uri = this.req.uri
@@ -104,17 +108,17 @@
 
         // GET 请求
         if (method === 'GET') {
-          // opt.qs = qs.stringify(this.getBody(appid, body))
           opt.qs = this.getBody(appid, body)
         } else {
           // 其他请求
           opt.body = JSON.stringify(this.getBody(appid, body))
         }
-        console.log('opt is :' + JSON.stringify(opt))
+        logger.info('opt is :' + JSON.stringify(opt))
         return opt
       },
       // 获取请求体
       getBody: function (appid, body) {
+        logger.info('获取请求体')
         var message = this.base64(this.getMessage(body))
         var signature = this.sign(appid + message)
         return {
@@ -124,6 +128,7 @@
       },
       // 组装message,拼装上必须信息
       getMessage: function (body) {
+        logger.info('组装message')
         if (!body) {
           body = {}
         } else {
@@ -132,10 +137,12 @@
         body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
         body['nonce'] = '123456'
         body['ex_serial_no'] = Date.parse(new Date())
+        logger.info('body' + JSON.stringify(body))
         return body
       },
       // base64转码
       base64: function (obj) {
+        logger.info('base64转码')
         if (!obj) {
           return
         }
@@ -145,6 +152,7 @@
       },
       // 签名
       sign: function (body) {
+        logger.info('签名')
         if (typeof body === 'object') {
           body = JSON.stringify(body)
         }
@@ -179,6 +187,9 @@
   }
 
   .box-card {
-    width: 480px;
+    width: auto;
+  }
+  .el-select .el-input {
+    width: 110px;
   }
 </style>
