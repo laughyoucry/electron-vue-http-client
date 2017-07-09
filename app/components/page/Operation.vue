@@ -46,12 +46,6 @@
   import crypto from 'crypto'
   import fs from 'fs'
   import moment from 'moment'
-  import log4js from 'log4js'
-
-  log4js.loadAppender('file')
-  log4js.addAppender(log4js.appenders.file('logs/cheese.log'), 'cheese')
-  var logger = log4js.getLogger('cheese')
-  logger.setLevel('DEBUG')
 
   export default {
     data () {
@@ -71,25 +65,28 @@
     methods: {
       // 发送事件
       onSubmit: function () {
-        logger.info('发送请求中...')
+        this.$message('发送请求中...')
         var opt = this.getOpt()
 
         var _this = this
         request(opt, function (error, response, body) {
-          logger.info('成功返回信息')
-          logger.info('error:', error)
-          logger.info('statusCode:', response && response.statusCode) // Print the response status code if a response was received
+          // logger.info('成功返回信息')
+          // logger.info('error:', error)
+          // Print the response status code if a response was received
+
+          _this.$message('成功返回信息')
+          _this.$message('error:' + error)
+          _this.$message('statusCode:', response && response.statusCode)
           if (response && response.statusCode === 200) {
             var resMsg = JSON.stringify((JSON.parse(body)).message)
             var decMsg = new Buffer(resMsg, 'base64').toString()
             _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
           }
-          logger.info('body:', body) // Print the HTML for the Google homepage.
+          _this.$message('body:', body) // Print the HTML for the Google homepage.
         })
       },
       // 获取 opt 对象
       getOpt: function () {
-        logger.info('获取 opt 对象')
         // 请求头信息
         var method = this.req.method
         var uri = this.req.uri
@@ -113,12 +110,12 @@
           // 其他请求
           opt.body = JSON.stringify(this.getBody(appid, body))
         }
-        logger.info('opt is :' + JSON.stringify(opt))
+        _this.$message('opt is :' + JSON.stringify(opt))
         return opt
       },
       // 获取请求体
       getBody: function (appid, body) {
-        logger.info('获取请求体')
+        // logger.info('获取请求体')
         var message = this.base64(this.getMessage(body))
         var signature = this.sign(appid + message)
         return {
@@ -128,7 +125,7 @@
       },
       // 组装message,拼装上必须信息
       getMessage: function (body) {
-        logger.info('组装message')
+        _this.$message('组装message')
         if (!body) {
           body = {}
         } else {
@@ -137,12 +134,11 @@
         body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
         body['nonce'] = '123456'
         body['ex_serial_no'] = Date.parse(new Date())
-        logger.info('body' + JSON.stringify(body))
+        _this.$message('body' + JSON.stringify(body))
         return body
       },
       // base64转码
       base64: function (obj) {
-        logger.info('base64转码')
         if (!obj) {
           return
         }
@@ -152,7 +148,6 @@
       },
       // 签名
       sign: function (body) {
-        logger.info('签名')
         if (typeof body === 'object') {
           body = JSON.stringify(body)
         }
