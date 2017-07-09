@@ -110,7 +110,7 @@
           // 其他请求
           opt.body = JSON.stringify(this.getBody(appid, body))
         }
-        _this.$message('opt is :' + JSON.stringify(opt))
+        this.$message('opt is :' + JSON.stringify(opt))
         return opt
       },
       // 获取请求体
@@ -125,7 +125,7 @@
       },
       // 组装message,拼装上必须信息
       getMessage: function (body) {
-        _this.$message('组装message')
+        this.$message('组装message')
         if (!body) {
           body = {}
         } else {
@@ -134,7 +134,7 @@
         body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
         body['nonce'] = '123456'
         body['ex_serial_no'] = Date.parse(new Date())
-        _this.$message('body' + JSON.stringify(body))
+        this.$message('body' + JSON.stringify(body))
         return body
       },
       // base64转码
