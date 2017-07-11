@@ -1,6 +1,6 @@
 {
-  "name": "electron-vue-http-client",
-  "productName": "Electron Vue Http Client",
+  "name": "http-client",
+  "productName": "Http Client",
   "version": "1.0.0",
   "description": "An Electron + Vue.js project. Base on electron-boilerplate-vue",
   "author": "lemo <linpeng_flexi@163.com>",
