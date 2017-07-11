@@ -44,17 +44,17 @@
 <script>
   import request from 'request'
   import crypto from 'crypto'
-  import fs from 'fs'
+  // import fs from 'fs'
   import moment from 'moment'
 
   export default {
     data () {
       return {
         req: {
-          'uri': '',
-          'appid': '',
-          'method': 'GET',
-          'body': ''
+          'uri': this.getFromLocal('req_uri', ''),
+          'appid': this.getFromLocal('req_appid', ''),
+          'method': this.getFromLocal('req_method', 'GET'),
+          'body': this.getFromLocal('req_body', '')
         },
         res: {
           body: ''
@@ -66,24 +66,48 @@
       // 发送事件
       onSubmit: function () {
         this.$message('发送请求中...')
+
+        // 是否需要加密、签名
+        var isEncrypt = this.getFromLocal('conf_isEncrypt', true)
+        var encryptKey = this.getFromLocal('conf_encryptKey', '')
+        if (isEncrypt !== 'false' && !encryptKey) {
+          this.$message.error('请配置信息公钥')
+          return
+        }
+
+        // 验证appid是否输入
+        if (isEncrypt !== 'false' && !this.req.appid) {
+          this.$message.error('请填写appid')
+          return
+        }
+
+        // 获取请求参数对象
         var opt = this.getOpt()
 
         var _this = this
+        // 发送请求
         request(opt, function (error, response, body) {
-          // logger.info('成功返回信息')
-          // logger.info('error:', error)
-          // Print the response status code if a response was received
-
           _this.$message('成功返回信息')
           _this.$message('error:' + error)
           _this.$message('statusCode:', response && response.statusCode)
           if (response && response.statusCode === 200) {
-            var resMsg = JSON.stringify((JSON.parse(body)).message)
-            var decMsg = new Buffer(resMsg, 'base64').toString()
-            _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
+            // 特殊响应的处理
+            if (isEncrypt !== 'false') {
+              var resMsg = JSON.stringify((JSON.parse(body)).message)
+              var decMsg = new Buffer(resMsg, 'base64').toString()
+              _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
+            } else {
+              // 直接展示
+              _this.res.body = JSON.stringify(JSON.parse(body), null, 2)
+            }
+          } else {
+            _this.res.body = error
+            _this.$message.error('statusCode' + response.statusCode)
           }
-          _this.$message('body:', body) // Print the HTML for the Google homepage.
         })
+
+        // 保存请求信息
+        this.saveReq()
       },
       // 获取 opt 对象
       getOpt: function () {
@@ -115,17 +139,23 @@
       },
       // 获取请求体
       getBody: function (appid, body) {
-        // logger.info('获取请求体')
-        var message = this.base64(this.getMessage(body))
-        var signature = this.sign(appid + message)
-        return {
-          message: message,
-          signature: signature
+        // 是否需要加密
+        var isEncrypt = this.getFromLocal('conf_isEncrypt', true)
+        if (isEncrypt !== 'false') {
+          var message = this.base64(this.getMessage(body))
+          var signature = this.sign(appid + message)
+          return {
+            message: message,
+            signature: signature
+          }
         }
+        if (!!body && body !== '') {
+          return JSON.parse(body)
+        }
+        return {}
       },
       // 组装message,拼装上必须信息
       getMessage: function (body) {
-        this.$message('组装message')
         if (!body) {
           body = {}
         } else {
@@ -152,9 +182,32 @@
           body = JSON.stringify(body)
         }
         var sign = crypto.createSign('SHA1')
-        var rsaPrivateKey = fs.readFileSync('privateKey.js').toString()
+        var rsaPrivateKey = this.getFromLocal('conf_encryptKey', '')
         sign.update(body)
         return sign.sign(rsaPrivateKey, 'base64')
+      },
+      // 保存请求参数信息
+      saveReq: function () {
+        localStorage.setItem('req_uri', this.req.uri)
+        localStorage.setItem('req_appid', this.req.appid)
+        localStorage.setItem('req_method', this.req.method)
+        localStorage.setItem('req_body', this.req.body)
+      },
+      // 从localStorage获取值
+      getFromLocal: function (item, dval) {
+        var result = localStorage.getItem(item)
+        if (!result) {
+          return dval
+        }
+        return result
+      },
+      // 从localStorage获取布尔值
+      getBooleanFromLocal: function (item, dval) {
+        var result = localStorage.getItem(item)
+        if (!result) {
+          return dval
+        }
+        return result === 'true'
       }
     }
   }

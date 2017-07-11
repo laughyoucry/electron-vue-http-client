@@ -35,6 +35,9 @@
     <el-form-item label="密码密钥">
       <el-input type="textarea" v-model="conf.pwdEncryptKey" :rows="16"></el-input>
     </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="onSubmit">确定</el-button>
+    </el-form-item>
   </el-form>
 </template>
 <script>
@@ -42,11 +45,11 @@
     data () {
       return {
         conf: {
-          isEncrypt: true,
-          encryptKey: '',
-          isPwdEncrypt: true,
-          keys: ['标签一', '标签二', '标签三'],
-          pwdEncryptKey: ''
+          isEncrypt: this.getBooleanFromLocal('conf_isEncrypt', true),
+          encryptKey: this.getFromLocal('conf_encryptKey', ''),
+          isPwdEncrypt: this.getBooleanFromLocal('conf_isPwdEncrypt', true),
+          keys: this.getFromLocal('conf_keys', '').split(','),
+          pwdEncryptKey: this.getFromLocal('conf_pwdEncryptKey', '')
         },
         inputVisible: false,
         inputValue: ''
@@ -54,7 +57,12 @@
     },
     methods: {
       onSubmit () {
-        console.log('submit!')
+        localStorage.setItem('conf_isEncrypt', this.conf.isEncrypt)
+        localStorage.setItem('conf_encryptKey', this.conf.encryptKey)
+        localStorage.setItem('conf_isPwdEncrypt', this.conf.isPwdEncrypt)
+        localStorage.setItem('conf_keys', this.conf.keys)
+        localStorage.setItem('conf_pwdEncryptKey', this.conf.pwdEncryptKey)
+        this.$message('保存设置成功!')
       },
       handleClose (tag) {
         this.conf.keys.splice(this.conf.keys.indexOf(tag), 1)
@@ -74,6 +82,22 @@
         }
         this.inputVisible = false
         this.inputValue = ''
+      },
+
+      getFromLocal (item, dval) {
+        var result = localStorage.getItem(item)
+        if (!result) {
+          return dval
+        }
+        return result
+      },
+
+      getBooleanFromLocal (item, dval) {
+        var result = localStorage.getItem(item)
+        if (!result) {
+          return dval
+        }
+        return result === 'true'
       }
     }
   }
