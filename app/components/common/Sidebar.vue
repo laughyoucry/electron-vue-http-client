@@ -34,6 +34,10 @@
             index: 'operation',
             title: '操作'
           }, {
+            icon: 'el-icon-document',
+            index: 'script',
+            title: '脚本执行'
+          }, {
             icon: 'el-icon-setting',
             index: 'setting',
             title: '设置'

@@ -43,7 +43,6 @@
 
 <script>
   import request from 'request'
-  import crypto from 'crypto'
   // import fs from 'fs'
   import moment from 'moment'
 
@@ -143,7 +142,8 @@
         var isEncrypt = this.getFromLocal('conf_isEncrypt', true)
         if (isEncrypt !== 'false') {
           var message = this.base64(this.getMessage(body))
-          var signature = this.sign(appid + message)
+          var rsaPrivateKey = this.getFromLocal('conf_encryptKey', '')
+          var signature = this.sign(appid + message, rsaPrivateKey)
           return {
             message: message,
             signature: signature
@@ -167,47 +167,12 @@
         this.$message('body' + JSON.stringify(body))
         return body
       },
-      // base64转码
-      base64: function (obj) {
-        if (!obj) {
-          return
-        }
-        var tmp = JSON.stringify(obj)
-        var buf = new Buffer(tmp)
-        return buf.toString('base64')
-      },
-      // 签名
-      sign: function (body) {
-        if (typeof body === 'object') {
-          body = JSON.stringify(body)
-        }
-        var sign = crypto.createSign('SHA1')
-        var rsaPrivateKey = this.getFromLocal('conf_encryptKey', '')
-        sign.update(body)
-        return sign.sign(rsaPrivateKey, 'base64')
-      },
       // 保存请求参数信息
       saveReq: function () {
         localStorage.setItem('req_uri', this.req.uri)
         localStorage.setItem('req_appid', this.req.appid)
         localStorage.setItem('req_method', this.req.method)
         localStorage.setItem('req_body', this.req.body)
-      },
-      // 从localStorage获取值
-      getFromLocal: function (item, dval) {
-        var result = localStorage.getItem(item)
-        if (!result) {
-          return dval
-        }
-        return result
-      },
-      // 从localStorage获取布尔值
-      getBooleanFromLocal: function (item, dval) {
-        var result = localStorage.getItem(item)
-        if (!result) {
-          return dval
-        }
-        return result === 'true'
       }
     }
   }

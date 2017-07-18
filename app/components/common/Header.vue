@@ -2,36 +2,19 @@
   <div class='header'>
     <div class='logo'>HTTP请求客户端</div>
     <div class='user-info'>
-      <el-dropdown trigger='click' command="handleCommand">
-        <span class='el-dropdown-link'>
-          {{username}}
-        </span>
-        <el-dropdown-menu slot='dropdown'>
-          <el-dropdown-item command='loginout'>退出</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
+      当前系统：{{ platform }} app版本：{{ appVersion }}
     </div>
   </div>
 </template>
 <script>
+  import { remote } from 'electron'
+  import os from 'os'
+
   export default{
     data () {
       return {
-        name: 'lemo'
-      }
-    },
-    computed: {
-      username () {
-        let username = localStorage.getItem('ms_username')
-        return username || this.name
-      }
-    },
-    method: {
-      handleCommand (command) {
-        if (command === 'loginout') {
-          localStorage.removeItem('ms_username')
-          this.$router.push('/login')
-        }
+        platform: os.platform(),
+        appVersion: remote.app.getVersion()
       }
     }
   }

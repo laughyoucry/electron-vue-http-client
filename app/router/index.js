@@ -7,6 +7,7 @@ import home from '../components/common/Home.vue'
 import login from '../components/page/Login.vue'
 import readme from '../components/page/Readme.vue'
 import operation from '../components/page/Operation.vue'
+import script from '../components/page/Script.vue'
 import setting from '../components/page/Setting.vue'
 
 export default new Router({
@@ -26,6 +27,10 @@ export default new Router({
         {
           path: '/operation',
           component: operation
+        },
+        {
+          path: '/script',
+          component: script
         },
         {
           path: '/setting',
