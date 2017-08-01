@@ -9,7 +9,7 @@ import crypto from 'crypto'
 // import 'element-ui/lib/theme-default/index.css';
 // 浅绿色主题
 import '../static/css/theme-green/index.css'
-import '../dist/assets/app.css'
+// import '../dist/assets/app.css'
 import 'babel-polyfill'
 
 // 开启debug模式
@@ -46,6 +46,16 @@ Vue.prototype.sign = function (body, pk) {
   // var rsaPrivateKey = this.getFromLocal('conf_encryptKey', '')
   sign.update(body)
   return sign.sign(pk, 'base64')
+}
+
+// 公钥加密
+Vue.prototype.pkEncrypt = function (body, pk) {
+  if (typeof body === 'object') {
+    body = JSON.stringify(body)
+  }
+  var content = new Buffer(body)
+  var encrypt = crypto.publicEncrypt(pk, content)
+  return encrypt.toString('base64')
 }
 
 // 从localStorage获取值

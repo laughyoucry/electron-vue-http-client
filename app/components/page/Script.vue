@@ -4,14 +4,20 @@
       <el-button slot="append" icon="search" @click="startTest">开始测试</el-button>
     </el-input>
     <h3 style="margin:40px 0 15px;font-weight: 400;color: #1f2f3d;">测试结果：</h3>
-    <el-collapse v-for="resp in resps">
+    <el-collapse v-for="resp in resps" :key="resp.name">
       <el-collapse-item v-bind:name="resp.name">
         <template slot="title">
           {{ resp.title }}
           <i v-bind:class="resp.class"></i>
         </template>
-        <div>{{ resp.content }}</div>
-        <div>{{ resp.body }}</div>
+        <div>
+          <h3>请求消息：</h3>
+          <p>{{ resp.content }}</p>
+        </div>
+        <div>
+          <h3>响应消息：</h3>
+          <p>{{ resp.body }}</p>
+        </div>
       </el-collapse-item>
     </el-collapse>
   </div>
@@ -20,6 +26,8 @@
 <script>
     import fs from 'fs'
     import path from 'path'
+    import moment from 'moment'
+    import request from 'request'
 
     // 信息 type 类型
     var respType = ['header-icon el-icon-circle-check', 'header-icon el-icon-circle-close', 'header-icon el-icon-warning']
@@ -27,51 +35,15 @@
     export default{
       data () {
         return {
+          // 是否需要加密、签名
+          isEncrypt: this.getFromLocal('conf_isEncrypt', true),
+          encryptKey: this.getFromLocal('conf_encryptKey', ''),
+          // 是否需要密码加密
+          isPwdEncrypt: this.getFromLocal('conf_isPwdEncrypt', true),
+          pwdEncryptKey: this.getFromLocal('conf_pwdEncryptKey', ''),
           folderPath: '',
           files: [],
-          resps: [{
-            title: '一致性 Consistency',
-            class: respType[0],
-            name: '1',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: respType[1],
-            name: '2',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: 'header-icon el-icon-circle-close',
-            name: '3',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: 'header-icon el-icon-circle-cross',
-            name: '4',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: 'header-icon el-icon-circle-cross',
-            name: '5',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: 'header-icon el-icon-circle-cross',
-            name: '6',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }, {
-            title: '一致性 Consistency',
-            class: 'header-icon el-icon-warning',
-            name: '7',
-            content: '与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；',
-            body: '在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。'
-          }]
+          resps: []
         }
       },
       methods: {
@@ -81,7 +53,13 @@
           this.files = []
           this.scanDir(this.folderPath)
           if (this.files.length > 0) {
-            console.log(this.files)
+            var _this = this
+            // 初始化响应
+            this.resps = []
+            // 执行测试
+            this.files.forEach(function (file) {
+              _this.sendRequest(file)
+            })
           } else {
             this.$message.error('未找到有效文件，请检查路径和文件名!')
           }
@@ -98,8 +76,147 @@
               _this.scanDir(filePath + '/' + file)
             })
           } catch (e) {
-            console.log(filePath + '不是文件路径')
+            _this.llog(filePath + '不是文件路径')
           }
+        },
+        // 解析文件并发送测试请求
+        sendRequest: function (filePath) {
+          this.llog('解析文件开始，文件路径：' + filePath)
+          var name = path.basename(filePath, '.json')
+          this.llog('文件名为：' + name)
+          // 读取文件
+          var fileData = fs.readFileSync(filePath)
+          // 解析文件
+          var reqData = JSON.parse(fileData)
+          if (!reqData) {
+            this.llog('文件：' + name + '无内容或JSON格式不正确')
+            return
+          }
+          // 获取请求参数对象
+          var opt = this.getOpt(reqData)
+
+          var _this = this
+          // 发送请求
+          request(opt, function (error, response, body) {
+            _this.llog(name + ' 成功返回信息')
+            _this.llog(name + ' error:' + error)
+            _this.llog(name + ' statusCode:', response && response.statusCode)
+            var resp = {
+              title: name + ' 结果',
+              // 默认都是成功的
+              class: respType[0],
+              name: name,
+              content: reqData,
+              body: {}
+            }
+            if (response && response.statusCode === 200) {
+              // 特殊响应的处理
+              if (_this.isEncrypt !== 'false') {
+                var resMsg = JSON.stringify((JSON.parse(body)).message)
+                var decMsg = new Buffer(resMsg, 'base64').toString()
+                resp.body = JSON.stringify(JSON.parse(decMsg), null, 2)
+              } else {
+                // 直接展示
+                resp.body = JSON.stringify(JSON.parse(body), null, 2)
+              }
+            } else {
+              resp.class = respType[1]
+              resp.body = error
+            }
+            // 添加返回结果
+            _this.resps.push(resp)
+          })
+        },
+        // 获取 opt 对象
+        getOpt: function (req) {
+          // 请求头信息
+          var method = req.method
+          var uri = req.uri
+          var body = req.body
+          var appid = req.appid
+
+          // application/x-www-form-urlencoded
+          var contentType = 'application/json;charset=utf-8'
+          var opt = {
+            method: method,
+            uri: uri,
+            headers: {
+              'Content-Type': contentType
+            }
+          }
+
+          // GET 请求
+          if (method === 'GET') {
+            opt.qs = this.getBody(appid, body)
+          } else {
+            // 其他请求
+            opt.body = JSON.stringify(this.getBody(appid, body))
+          }
+          this.llog('opt is :' + JSON.stringify(opt))
+          return opt
+        },
+        // 获取请求体
+        getBody: function (appid, body) {
+          // 是否需要加密
+          if (this.isEncrypt !== 'false') {
+            var message = this.base64(this.getMessage(body))
+            var signature = this.sign(appid + message, this.encryptKey)
+            return {
+              message: message,
+              signature: signature
+            }
+          }
+          if (!!body && body !== '' && !this.isEmptyObject(body)) {
+            return JSON.parse(body)
+          }
+          return {}
+        },
+        // 组装message,拼装上必须信息
+        getMessage: function (body) {
+          if (!body) {
+            body = {}
+          } else if (typeof body === 'string') {
+            body = JSON.parse(body)
+          }
+          // 目前只支持 /user/encrypted_pay_pin 字段加密
+          if (this.isPwdEncrypt !== 'false') {
+            if (this.pwdEncryptKey === '') {
+              this.llog.error('请配置密码加密公钥')
+              return
+            }
+            if (!!body.user && !!body.user.encrypted_pay_pin) {
+              var encryptedPayPin = this.pkEncrypt(body.user.encrypted_pay_pin, this.pwdEncryptKey)
+              body.user.encrypted_pay_pin = encryptedPayPin
+            }
+          }
+
+          body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
+          body['nonce'] = '123456'
+          body['ex_serial_no'] = Date.parse(new Date())
+          this.llog('body' + JSON.stringify(body))
+          return body
+        },
+        // 判断是否空对象
+        isEmptyObject: function (e) {
+          var t
+          for (t in e) {
+            console.log(t)
+            return !1
+          }
+          return !0
+        },
+        // 输出返回结果到文件中
+        llog: function (content) {
+          var _this = this
+          var timestamp = moment().format('YYYY-MM-DD HH:mm:ss')
+          content = '[' + timestamp + ']:' + content + '\n'
+          // 默认输出文件
+          fs.appendFile('script_log.log', content, 'utf8', (err) => {
+            if (err) {
+              _this.$message.error(err)
+            }
+          })
+          // 追加返回结果
         }
       }
     }

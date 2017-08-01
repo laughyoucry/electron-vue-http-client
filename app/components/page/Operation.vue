@@ -161,6 +161,21 @@
         } else {
           body = JSON.parse(body)
         }
+        // 支付密码加密
+        var isPwdEncrypt = this.getFromLocal('conf_isPwdEncrypt', true)
+        // 目前只支持 /user/encrypted_pay_pin 字段加密
+        if (isPwdEncrypt !== 'false') {
+          var rsaPrivateKey = this.getFromLocal('conf_pwdEncryptKey', '')
+          if (rsaPrivateKey === '') {
+            this.$message.error('请配置密码加密公钥')
+            return
+          }
+          if (!!body.user && !!body.user.encrypted_pay_pin) {
+            var encryptedPayPin = this.pkEncrypt(body.user.encrypted_pay_pin, rsaPrivateKey)
+            body.user.encrypted_pay_pin = encryptedPayPin
+          }
+        }
+
         body['timestamp'] = moment().format('YYYY-MM-DD HH:mm:ss')
         body['nonce'] = '123456'
         body['ex_serial_no'] = Date.parse(new Date())
