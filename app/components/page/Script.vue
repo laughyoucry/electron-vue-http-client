@@ -12,11 +12,11 @@
         </template>
         <div>
           <h3>请求消息：</h3>
-          <p>{{ resp.content }}</p>
+          <code><pre>{{ resp.content }}</pre></code>
         </div>
         <div>
           <h3>响应消息：</h3>
-          <p>{{ resp.body }}</p>
+          <code><pre>{{ resp.body }}</pre></code>
         </div>
       </el-collapse-item>
     </el-collapse>
@@ -41,7 +41,7 @@
           // 是否需要密码加密
           isPwdEncrypt: this.getFromLocal('conf_isPwdEncrypt', true),
           pwdEncryptKey: this.getFromLocal('conf_pwdEncryptKey', ''),
-          folderPath: '',
+          folderPath: this.getFromLocal('folder_path', ''),
           files: [],
           resps: []
         }
@@ -54,6 +54,8 @@
           this.scanDir(this.folderPath)
           if (this.files.length > 0) {
             var _this = this
+            // 保存文件路径到本地存储
+            localStorage.setItem('folder_path', this.folderPath)
             // 初始化响应
             this.resps = []
             // 执行测试
@@ -115,14 +117,17 @@
                 var resMsg = JSON.stringify((JSON.parse(body)).message)
                 var decMsg = new Buffer(resMsg, 'base64').toString()
                 resp.body = JSON.stringify(JSON.parse(decMsg), null, 2)
+                // resp.body = decMsg
               } else {
                 // 直接展示
                 resp.body = JSON.stringify(JSON.parse(body), null, 2)
+                // resp.body = body
               }
             } else {
               resp.class = respType[1]
               resp.body = error
             }
+            _this.llog('返回消息为：' + resp.body)
             // 添加返回结果
             _this.resps.push(resp)
           })
@@ -211,7 +216,7 @@
           var timestamp = moment().format('YYYY-MM-DD HH:mm:ss')
           content = '[' + timestamp + ']:' + content + '\n'
           // 默认输出文件
-          fs.appendFile('script_log.log', content, 'utf8', (err) => {
+          fs.appendFile('logs/script_log.log', content, 'utf8', (err) => {
             if (err) {
               _this.$message.error(err)
             }

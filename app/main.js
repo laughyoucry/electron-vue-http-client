@@ -10,7 +10,7 @@ import crypto from 'crypto'
 // 浅绿色主题
 import '../static/css/theme-green/index.css'
 // import '../dist/assets/app.css'
-import 'babel-polyfill'
+// import 'babel-polyfill'
 
 // 开启debug模式
 Vue.config.debug = true
