@@ -1,0 +1,19 @@
+{
+  "uri":"http://10.96.8.1/biz/exch/5771c28c0d134f64b6a5ec143884dac0/P201707311436",
+  "method":"POST",
+  "body":{
+  	"user":{
+  		"user_no":"P201707311436",
+  		"name":"惠举",
+  		"cert_type":"0",
+  		"cert_no":"370105199011083713",
+  		"mobile":"13777777777",
+  		"encrypted_pay_pin":"123456",
+  		"contact":{
+  			"email":"test@qq.com",
+  			"addr":"上海市浦东新区南洋泾路555号",
+  			"zip_code":"210000"
+  		}
+  	}
+  }
+}
