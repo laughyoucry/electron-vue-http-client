@@ -30,9 +30,17 @@
             index: 'readme',
             title: '欢迎'
           }, {
-            icon: 'el-icon-menu',
+            icon: 'el-icon-edit',
             index: 'operation',
             title: '操作'
+          }, {
+            icon: 'el-icon-time',
+            index: 'history',
+            title: '历史记录'
+          }, {
+            icon: 'el-icon-menu',
+            index: 'normal',
+            title: '常用'
           }, {
             icon: 'el-icon-document',
             index: 'script',

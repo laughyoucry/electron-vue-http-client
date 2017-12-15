@@ -101,16 +101,27 @@
           _this.$message('成功返回信息')
           _this.$message('error:' + error)
           _this.$message('statusCode:', response && response.statusCode)
+          let respMsg
           if (response && response.statusCode === 200) {
             // 特殊响应的处理
             if (isEncrypt !== 'false') {
               var resMsg = JSON.stringify((JSON.parse(body)).message)
               var decMsg = new Buffer(resMsg, 'base64').toString()
-              _this.res.body = JSON.stringify(JSON.parse(decMsg), null, 2)
+              respMsg = JSON.parse(decMsg)
+              _this.res.body = JSON.stringify(respMsg, null, 2)
             } else {
               // 直接展示
-              _this.res.body = JSON.stringify(JSON.parse(body), null, 2)
+              respMsg = JSON.parse(body)
+              _this.res.body = JSON.stringify(respMsg, null, 2)
             }
+            // 保存到历史记录
+            let hisData = {}
+            hisData.appid = _this.req.appid
+            hisData.uri = _this.req.uri
+            hisData.method = _this.req.method
+            hisData.body = _this.req.body
+            hisData.response = respMsg
+            comm.saveHistory(JSON.stringify(hisData, null, 2))
           } else {
             _this.res.body = error
             _this.$message.error('statusCode' + response.statusCode)
